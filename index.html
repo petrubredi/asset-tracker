@@ -1,0 +1,1959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Asset Tracker v1.1</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .export-button, .backup-button, .restore-button {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .export-button:hover, .backup-button:hover, .restore-button:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .restore-button {
+            border-color: #48bb78;
+            color: #48bb78;
+        }
+
+        .restore-button:hover {
+            background: #48bb78;
+            color: white;
+        }
+
+        .net-worth {
+            font-size: 36px;
+            font-weight: bold;
+            color: #2d3748;
+            margin-top: 15px;
+        }
+
+        .annual-carry {
+            font-size: 20px;
+            font-weight: 600;
+            color: #48bb78;
+            margin-top: 10px;
+        }
+
+        .annual-carry.negative {
+            color: #f56565;
+        }
+
+        .net-worth-label {
+            font-size: 14px;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .asset-cards {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .asset-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .asset-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
+        .asset-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .asset-card-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .asset-icon {
+            font-size: 24px;
+        }
+
+        .asset-card-value {
+            font-size: 22px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .asset-card-details {
+            font-size: 13px;
+            color: #718096;
+            margin-top: 5px;
+        }
+
+        .asset-carry {
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        .asset-carry.positive {
+            color: #48bb78;
+        }
+
+        .asset-carry.negative {
+            color: #f56565;
+        }
+
+        .add-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            transition: background 0.2s;
+        }
+
+        .add-button:hover {
+            background: #5568d3;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #2d3748;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        .button-group button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .detail-view {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .back-button {
+            background: #e2e8f0;
+            color: #4a5568;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .back-button:hover {
+            background: #cbd5e0;
+        }
+
+        .detail-header {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .detail-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .detail-grid {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .detail-item {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .detail-label {
+            font-size: 12px;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-size: 16px;
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        .copy-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 8px;
+            transition: background 0.2s;
+        }
+
+        .copy-button:hover {
+            background: #5568d3;
+        }
+
+        .copy-button:active {
+            background: #48bb78;
+        }
+
+        .banking-details {
+            background: #eef2ff;
+            border-left: 4px solid #667eea;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+
+        .banking-detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            border-bottom: 1px solid #cbd5e0;
+        }
+
+        .banking-detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .banking-detail-label {
+            font-size: 12px;
+            color: #4a5568;
+            font-weight: 600;
+        }
+
+        .banking-detail-value {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #2d3748;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        .btn-edit {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-delete {
+            background: #f56565;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #e53e3e;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #718096;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .carry-info {
+            background: #f0fff4;
+            border-left: 4px solid #48bb78;
+            padding: 12px;
+            margin-top: 10px;
+            border-radius: 4px;
+        }
+
+        .carry-info.negative {
+            background: #fff5f5;
+            border-left-color: #f56565;
+        }
+
+        .holdings-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #e2e8f0;
+        }
+
+        .holdings-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 15px;
+        }
+
+        .holding-item {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .holding-name {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .holding-details {
+            font-size: 13px;
+            color: #718096;
+            margin-top: 3px;
+        }
+
+        .holding-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #667eea;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>
+                <span>💼 My Assets <span style="font-size: 14px; color: #a0aec0; font-weight: normal;">v1.1</span></span>
+                <div class="header-buttons">
+                    <button class="backup-button" onclick="backupData()">💾 Backup Data</button>
+                    <button class="restore-button" onclick="document.getElementById('restoreInput').click()">📥 Restore Data</button>
+                    <button class="export-button" onclick="showExportModal()">📄 Export Summary</button>
+                </div>
+            </h1>
+            <input type="file" id="restoreInput" accept=".json" style="display: none;" onchange="restoreData(event)">
+            <div class="net-worth-label">Total Net Worth</div>
+            <div class="net-worth" id="netWorth">$0.00</div>
+            <div class="net-worth-label" style="margin-top: 15px;">Estimated Annual Carry</div>
+            <div class="annual-carry" id="annualCarry">$0.00</div>
+        </div>
+
+        <div id="mainView">
+            <div class="asset-cards" id="assetList"></div>
+            <button class="add-button" onclick="showAddAsset()">+ Add New Asset</button>
+        </div>
+
+        <div id="detailView" style="display: none;"></div>
+    </div>
+
+    <!-- Add/Edit Asset Modal -->
+    <div class="modal" id="assetModal">
+        <div class="modal-content">
+            <div class="modal-header" id="assetModalTitle">Add Asset</div>
+            <form id="assetForm">
+                <div class="form-group">
+                    <label>Asset Type</label>
+                    <select id="assetType" onchange="updateAssetForm()" required>
+                        <option value="">Select type...</option>
+                        <option value="bank">🏦 Bank Account</option>
+                        <option value="brokerage">📊 Brokerage/Investment Account</option>
+                        <option value="crypto-exchange">🔄 Crypto Exchange</option>
+                        <option value="crypto-custody">₿ Self-Custody Crypto</option>
+                        <option value="real-estate">🏠 Real Estate Property</option>
+                        <option value="other">📦 Other Asset</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label id="assetNameLabel">Asset Name</label>
+                    <input type="text" id="assetName" placeholder="e.g., UBS Account, Bitcoin Wallet, Main Street Apartment" required>
+                </div>
+
+                <div class="form-group">
+                    <label id="accountNumberLabel">Account/Reference Number</label>
+                    <input type="text" id="accountNumber" placeholder="e.g., Account #12345, Wallet Address, Property Address">
+                </div>
+
+                <div id="bankingDetailsFields"></div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Currency</label>
+                        <select id="assetCurrency" required>
+                            <option value="USD">$ US Dollar</option>
+                            <option value="GBP">£ British Pound</option>
+                            <option value="EUR">€ Euro</option>
+                            <option value="HKD">HK$ Hong Kong Dollar</option>
+                            <option value="AED">د.إ UAE Dirham</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Total Value</label>
+                        <input type="number" id="assetValue" placeholder="0.00" step="0.01" min="0">
+                        <div style="font-size: 11px; color: #718096; margin-top: 4px;">Leave as 0 if you'll add individual holdings</div>
+                    </div>
+                </div>
+
+                <div id="holdingsSection"></div>
+                <div id="carrySection"></div>
+
+                <div class="form-group">
+                    <label>Contact Person (Optional)</label>
+                    <input type="text" id="contactName" placeholder="Contact name">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Contact Phone</label>
+                        <input type="tel" id="contactPhone" placeholder="+1 234 567 8900">
+                    </div>
+                    <div class="form-group">
+                        <label>Contact Email</label>
+                        <input type="email" id="contactEmail" placeholder="contact@email.com">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Notes (Optional)</label>
+                    <textarea id="assetNotes" placeholder="Any additional details..."></textarea>
+                </div>
+
+                <div class="button-group">
+                    <button type="button" class="btn-secondary" onclick="closeAssetModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Asset</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Holding Modal -->
+    <div class="modal" id="holdingModal">
+        <div class="modal-content">
+            <div class="modal-header" id="holdingModalTitle">Add Holding</div>
+            <form id="holdingForm">
+                <div class="form-group">
+                    <label>Holding Type</label>
+                    <select id="holdingType" onchange="updateHoldingFields()" required>
+                        <option value="">Select type...</option>
+                        <option value="cash">Cash</option>
+                        <option value="stocks">Stocks</option>
+                        <option value="bonds">Bonds</option>
+                        <option value="etf">ETFs</option>
+                        <option value="mutual-funds">Mutual Funds</option>
+                        <option value="crypto">Cryptocurrency</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Name/Description</label>
+                    <input type="text" id="holdingName" placeholder="e.g., Apple Stock, Bitcoin, USD Cash" required>
+                </div>
+
+                <div id="holdingDynamicFields"></div>
+
+                <div class="button-group">
+                    <button type="button" class="btn-secondary" onclick="closeHoldingModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Holding</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Export Options Modal -->
+    <div class="modal" id="exportModal">
+        <div class="modal-content">
+            <div class="modal-header">Export Options</div>
+            <div style="margin: 20px 0;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" id="hideValuesCheckbox" style="width: auto; cursor: pointer;">
+                    <span style="font-size: 15px; color: #2d3748;">Hide all financial values (for sharing)</span>
+                </label>
+                <div style="font-size: 13px; color: #718096; margin-top: 8px; margin-left: 28px;">
+                    When checked, the export will show all account details and contacts but hide amounts/values
+                </div>
+            </div>
+            <div class="button-group">
+                <button type="button" class="btn-secondary" onclick="closeExportModal()">Cancel</button>
+                <button type="button" class="btn-primary" onclick="generateExport()">Generate PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data structure - flat list of assets
+        let assets = [];
+        let editingAssetId = null;
+        let editingHoldingAssetId = null;
+        let editingHoldingId = null;
+
+        // Asset type metadata
+        const assetTypeMeta = {
+            'bank': { icon: '🏦', label: 'Bank Account' },
+            'brokerage': { icon: '📊', label: 'Brokerage Account' },
+            'crypto-exchange': { icon: '🔄', label: 'Crypto Exchange' },
+            'crypto-custody': { icon: '₿', label: 'Self-Custody Wallet' },
+            'real-estate': { icon: '🏠', label: 'Real Estate' },
+            'other': { icon: '📦', label: 'Other Asset' }
+        };
+
+        // Currency options
+        const currencies = {
+            'USD': { symbol: '$', name: 'US Dollar' },
+            'GBP': { symbol: '£', name: 'British Pound' },
+            'EUR': { symbol: '€', name: 'Euro' },
+            'HKD': { symbol: 'HK$', name: 'Hong Kong Dollar' },
+            'AED': { symbol: 'د.إ', name: 'UAE Dirham' }
+        };
+
+        // Currency conversion rates (to USD)
+        const conversionRates = {
+            'USD': 1,
+            'GBP': 1.27,
+            'EUR': 1.09,
+            'HKD': 0.13,
+            'AED': 0.27
+        };
+
+        // Load data
+        function loadData() {
+            const saved = localStorage.getItem('assetTrackerData_v4');
+            if (saved) {
+                assets = JSON.parse(saved);
+            }
+        }
+
+        // Save data
+        function saveData() {
+            localStorage.setItem('assetTrackerData_v4', JSON.stringify(assets));
+        }
+
+        // Format currency
+        function formatCurrency(value, currency = 'USD') {
+            const curr = currencies[currency] || currencies['USD'];
+            return curr.symbol + new Intl.NumberFormat('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(value);
+        }
+
+        // Convert to USD
+        function convertToUSD(value, currency) {
+            return value * (conversionRates[currency] || 1);
+        }
+
+        // Calculate annual carry for an asset
+        function calculateAssetCarry(asset) {
+            let carry = 0;
+            
+            if (asset.assetType === 'real-estate') {
+                // Rental income
+                if (asset.rentalIncome && asset.rentalFrequency) {
+                    let annualRental = parseFloat(asset.rentalIncome);
+                    if (asset.rentalFrequency === 'weekly') annualRental *= 52;
+                    else if (asset.rentalFrequency === 'monthly') annualRental *= 12;
+                    carry += convertToUSD(annualRental, asset.currency || 'USD');
+                }
+                // Subtract expenses
+                if (asset.annualExpenses) {
+                    carry -= convertToUSD(parseFloat(asset.annualExpenses), asset.currency || 'USD');
+                }
+                // Subtract mortgage payments
+                if (asset.monthlyPayment) {
+                    carry -= convertToUSD(parseFloat(asset.monthlyPayment) * 12, asset.currency || 'USD');
+                }
+            }
+
+            // Add carry from holdings (bonds)
+            if (asset.holdings) {
+                asset.holdings.forEach(holding => {
+                    if (holding.type === 'bonds' && holding.coupon && holding.quantity) {
+                        const couponRate = parseFloat(holding.coupon) / 100;
+                        const notional = parseFloat(holding.quantity);
+                        const annualCoupon = notional * couponRate;
+                        // Use holding currency for conversion
+                        carry += convertToUSD(annualCoupon, holding.currency || asset.currency || 'USD');
+                    }
+                });
+            }
+            
+            return carry;
+        }
+
+        // Calculate total annual carry
+        function calculateTotalCarry() {
+            return assets.reduce((sum, asset) => sum + calculateAssetCarry(asset), 0);
+        }
+
+        // Calculate effective value of an asset (sum of holdings or direct value, minus liabilities)
+        function getAssetValue(asset) {
+            let value = 0;
+            
+            if (asset.holdings && asset.holdings.length > 0) {
+                // If holdings exist, sum them up (converted to asset currency)
+                value = asset.holdings.reduce((sum, h) => {
+                    const valueInUSD = convertToUSD(parseFloat(h.value || 0), h.currency || asset.currency || 'USD');
+                    // Convert from USD to asset currency
+                    return sum + (valueInUSD / (conversionRates[asset.currency] || 1));
+                }, 0);
+            } else {
+                // If no holdings, use the direct value field
+                value = parseFloat(asset.value || 0);
+            }
+            
+            // Subtract mortgage balance for real estate
+            if (asset.assetType === 'real-estate' && asset.hasMortgage && asset.mortgageBalance) {
+                value -= parseFloat(asset.mortgageBalance);
+            }
+            
+            return value;
+        }
+
+        // Calculate net worth
+        function calculateNetWorth() {
+            return assets.reduce((sum, asset) => {
+                const assetValue = getAssetValue(asset);
+                return sum + convertToUSD(assetValue, asset.currency || 'USD');
+            }, 0);
+        }
+
+        // Render asset list
+        function renderAssets() {
+            const assetList = document.getElementById('assetList');
+            
+            if (assets.length === 0) {
+                assetList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">💼</div>
+                        <div>No assets added yet. Click the button below to get started!</div>
+                    </div>
+                `;
+            } else {
+                // Define sort order for asset types
+                const typeOrder = {
+                    'bank': 1,
+                    'brokerage': 2,
+                    'crypto-exchange': 3,
+                    'crypto-custody': 4,
+                    'real-estate': 5,
+                    'other': 6
+                };
+                
+                // Sort assets by type, then by name
+                const sortedAssets = [...assets].sort((a, b) => {
+                    const typeCompare = (typeOrder[a.assetType] || 99) - (typeOrder[b.assetType] || 99);
+                    if (typeCompare !== 0) return typeCompare;
+                    return a.name.localeCompare(b.name);
+                });
+                
+                assetList.innerHTML = sortedAssets.map(asset => {
+                    const meta = assetTypeMeta[asset.assetType] || { icon: '📦', label: 'Asset' };
+                    const assetValue = getAssetValue(asset);
+                    const value = convertToUSD(assetValue, asset.currency || 'USD');
+                    const carry = calculateAssetCarry(asset);
+                    
+                    let details = [];
+                    if (asset.accountNumber) {
+                        details.push(asset.accountNumber);
+                    }
+                    if (asset.holdings && asset.holdings.length > 0) {
+                        details.push(`${asset.holdings.length} holding${asset.holdings.length !== 1 ? 's' : ''}`);
+                    }
+                    
+                    return `
+                        <div class="asset-card" onclick="showAssetDetail('${asset.id}')">
+                            <div class="asset-card-header">
+                                <div class="asset-card-name">
+                                    <span class="asset-icon">${meta.icon}</span>
+                                    ${asset.name}
+                                </div>
+                                <div class="asset-card-value">${formatCurrency(value, 'USD')}</div>
+                            </div>
+                            ${details.length > 0 ? `<div class="asset-card-details">${details.join(' • ')}</div>` : ''}
+                            ${carry !== 0 ? `<div class="asset-carry ${carry >= 0 ? 'positive' : 'negative'}">Annual carry: ${formatCurrency(Math.abs(carry), 'USD')} ${carry >= 0 ? '↑' : '↓'}</div>` : ''}
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Update totals
+            document.getElementById('netWorth').textContent = formatCurrency(calculateNetWorth(), 'USD');
+            const totalCarry = calculateTotalCarry();
+            const carryElement = document.getElementById('annualCarry');
+            carryElement.textContent = formatCurrency(Math.abs(totalCarry), 'USD') + (totalCarry >= 0 ? ' (positive)' : ' (negative)');
+            carryElement.className = totalCarry >= 0 ? 'annual-carry' : 'annual-carry negative';
+        }
+
+        // Show asset detail
+        function showAssetDetail(assetId) {
+            const asset = assets.find(a => a.id === assetId);
+            if (!asset) return;
+
+            const meta = assetTypeMeta[asset.assetType] || { icon: '📦', label: 'Asset' };
+            const detailView = document.getElementById('detailView');
+            const mainView = document.getElementById('mainView');
+
+            mainView.style.display = 'none';
+            detailView.style.display = 'block';
+
+            const assetCarry = calculateAssetCarry(asset);
+            const assetValue = getAssetValue(asset);
+            const hasHoldings = asset.holdings && asset.holdings.length > 0;
+
+            let fieldsHtml = `
+                <div class="detail-item">
+                    <div class="detail-label">Type</div>
+                    <div class="detail-value">${meta.label}</div>
+                </div>
+            `;
+
+            if (asset.accountNumber) {
+                const label = asset.assetType === 'real-estate' ? 'Address' : 
+                             asset.assetType === 'crypto-custody' ? 'Wallet Address' : 'Account Number';
+                fieldsHtml += `
+                    <div class="detail-item">
+                        <div class="detail-label">${label}</div>
+                        <div class="detail-value">
+                            ${asset.accountNumber}
+                            <button class="copy-button" onclick="copyToClipboard('${asset.accountNumber.replace(/'/g, "\\'")}', this)">Copy</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Show banking details for bank/brokerage accounts
+            if ((asset.assetType === 'bank' || asset.assetType === 'brokerage') && 
+                (asset.sortCode || asset.iban || asset.swiftCode)) {
+                fieldsHtml += `<div class="banking-details">`;
+                if (asset.sortCode) {
+                    fieldsHtml += `
+                        <div class="banking-detail-row">
+                            <span class="banking-detail-label">Sort Code / Routing:</span>
+                            <span>
+                                <span class="banking-detail-value">${asset.sortCode}</span>
+                                <button class="copy-button" onclick="copyToClipboard('${asset.sortCode.replace(/'/g, "\\'")}', this)">Copy</button>
+                            </span>
+                        </div>
+                    `;
+                }
+                if (asset.iban) {
+                    fieldsHtml += `
+                        <div class="banking-detail-row">
+                            <span class="banking-detail-label">IBAN:</span>
+                            <span>
+                                <span class="banking-detail-value">${asset.iban}</span>
+                                <button class="copy-button" onclick="copyToClipboard('${asset.iban.replace(/'/g, "\\'")}', this)">Copy</button>
+                            </span>
+                        </div>
+                    `;
+                }
+                if (asset.swiftCode) {
+                    fieldsHtml += `
+                        <div class="banking-detail-row">
+                            <span class="banking-detail-label">SWIFT/BIC:</span>
+                            <span>
+                                <span class="banking-detail-value">${asset.swiftCode}</span>
+                                <button class="copy-button" onclick="copyToClipboard('${asset.swiftCode.replace(/'/g, "\\'")}', this)">Copy</button>
+                            </span>
+                        </div>
+                    `;
+                }
+                fieldsHtml += `</div>`;
+            }
+
+            fieldsHtml += `
+                <div class="detail-item">
+                    <div class="detail-label">Total Value ${hasHoldings ? '(from holdings)' : ''}</div>
+                    <div class="detail-value">${formatCurrency(assetValue, asset.currency || 'USD')}</div>
+                </div>
+            `;
+            
+            // For real estate with mortgage, show breakdown
+            if (asset.assetType === 'real-estate' && asset.hasMortgage && asset.mortgageBalance) {
+                const propertyValue = hasHoldings ? 
+                    asset.holdings.reduce((sum, h) => sum + parseFloat(h.value || 0), 0) : 
+                    parseFloat(asset.value || 0);
+                fieldsHtml += `
+                    <div class="detail-item" style="background: #fff5f5;">
+                        <div class="detail-label">Property Value (Gross)</div>
+                        <div class="detail-value">${formatCurrency(propertyValue, asset.currency || 'USD')}</div>
+                    </div>
+                    <div class="detail-item" style="background: #fff5f5;">
+                        <div class="detail-label">Mortgage Balance</div>
+                        <div class="detail-value" style="color: #f56565;">- ${formatCurrency(asset.mortgageBalance, asset.currency || 'USD')}</div>
+                    </div>
+                    <div class="detail-item" style="background: #f0fff4;">
+                        <div class="detail-label">Equity (Net Value)</div>
+                        <div class="detail-value" style="color: #48bb78;">${formatCurrency(assetValue, asset.currency || 'USD')}</div>
+                    </div>
+                `;
+            }
+            
+            fieldsHtml += `
+                <div class="detail-item">
+                    <div class="detail-label">Currency</div>
+                    <div class="detail-value">${currencies[asset.currency || 'USD'].name}</div>
+                </div>
+            `;
+
+            // Real estate specific
+            if (asset.assetType === 'real-estate') {
+                if (asset.rentalStatus) {
+                    fieldsHtml += `
+                        <div class="detail-item">
+                            <div class="detail-label">Rental Status</div>
+                            <div class="detail-value">${asset.rentalStatus === 'rented' ? 'Rented' : 'Unrented'}</div>
+                        </div>
+                    `;
+                }
+                if (asset.rentalIncome) {
+                    fieldsHtml += `
+                        <div class="detail-item">
+                            <div class="detail-label">Rental Income (${asset.rentalFrequency || 'monthly'})</div>
+                            <div class="detail-value">${formatCurrency(asset.rentalIncome, asset.currency || 'USD')}</div>
+                        </div>
+                    `;
+                }
+                if (asset.annualExpenses) {
+                    fieldsHtml += `
+                        <div class="detail-item">
+                            <div class="detail-label">Annual Expenses</div>
+                            <div class="detail-value">${formatCurrency(asset.annualExpenses, asset.currency || 'USD')}</div>
+                        </div>
+                    `;
+                }
+                if (asset.hasMortgage) {
+                    fieldsHtml += `
+                        <div class="detail-item">
+                            <div class="detail-label">Mortgage</div>
+                            <div class="detail-value">Yes</div>
+                        </div>
+                    `;
+                    if (asset.mortgageBalance) {
+                        fieldsHtml += `
+                            <div class="detail-item">
+                                <div class="detail-label">Mortgage Balance</div>
+                                <div class="detail-value">${formatCurrency(asset.mortgageBalance, asset.currency || 'USD')}</div>
+                            </div>
+                        `;
+                    }
+                    if (asset.monthlyPayment) {
+                        fieldsHtml += `
+                            <div class="detail-item">
+                                <div class="detail-label">Monthly Payment</div>
+                                <div class="detail-value">${formatCurrency(asset.monthlyPayment, asset.currency || 'USD')}</div>
+                            </div>
+                        `;
+                    }
+                }
+            }
+
+            // Contact info
+            if (asset.contactName) {
+                fieldsHtml += `
+                    <div class="detail-item">
+                        <div class="detail-label">Contact Person</div>
+                        <div class="detail-value">${asset.contactName}</div>
+                    </div>
+                `;
+            }
+            if (asset.contactPhone) {
+                fieldsHtml += `
+                    <div class="detail-item">
+                        <div class="detail-label">Contact Phone</div>
+                        <div class="detail-value">${asset.contactPhone}</div>
+                    </div>
+                `;
+            }
+            if (asset.contactEmail) {
+                fieldsHtml += `
+                    <div class="detail-item">
+                        <div class="detail-label">Contact Email</div>
+                        <div class="detail-value">${asset.contactEmail}</div>
+                    </div>
+                `;
+            }
+
+            // Holdings section
+            let holdingsHtml = '';
+            if (asset.holdings && asset.holdings.length > 0) {
+                holdingsHtml = `
+                    <div class="holdings-section">
+                        <div class="holdings-title">Holdings</div>
+                        ${asset.holdings.map(holding => {
+                            let holdingContent = `
+                            <div class="holding-item">
+                                <div style="display: flex; justify-content: space-between; align-items: start;">
+                                    <div style="flex: 1;">
+                                        <div class="holding-name">${holding.name} (${holding.type})</div>
+                                        ${holding.currency ? `<div class="holding-details">Currency: ${currencies[holding.currency]?.name || holding.currency}</div>` : ''}
+                                        ${holding.quantity ? `<div class="holding-details">Quantity: ${holding.quantity}</div>` : ''}
+                                        ${holding.currentPrice ? `<div class="holding-details">Price: ${holding.type === 'bonds' ? holding.currentPrice + '%' : formatCurrency(holding.currentPrice, holding.currency || asset.currency || 'USD')}</div>` : ''}
+                                        ${holding.coupon ? `<div class="holding-details">Coupon: ${holding.coupon}%</div>` : ''}
+                                        ${holding.value ? `<div class="holding-value">${formatCurrency(holding.value, holding.currency || asset.currency || 'USD')}</div>` : ''}
+                            `;
+                            
+                            // Add banking details for bank account holdings
+                            if (asset.assetType === 'bank' && (holding.accountNumber || holding.sortCode || holding.iban || holding.swiftCode)) {
+                                holdingContent += `<div class="banking-details" style="margin-top: 10px;">`;
+                                if (holding.accountNumber) {
+                                    holdingContent += `
+                                        <div class="banking-detail-row">
+                                            <span class="banking-detail-label">Account:</span>
+                                            <span>
+                                                <span class="banking-detail-value">${holding.accountNumber}</span>
+                                                <button class="copy-button" onclick="copyToClipboard('${holding.accountNumber.replace(/'/g, "\\'")}', this)">Copy</button>
+                                            </span>
+                                        </div>
+                                    `;
+                                }
+                                if (holding.sortCode) {
+                                    holdingContent += `
+                                        <div class="banking-detail-row">
+                                            <span class="banking-detail-label">Sort Code:</span>
+                                            <span>
+                                                <span class="banking-detail-value">${holding.sortCode}</span>
+                                                <button class="copy-button" onclick="copyToClipboard('${holding.sortCode.replace(/'/g, "\\'")}', this)">Copy</button>
+                                            </span>
+                                        </div>
+                                    `;
+                                }
+                                if (holding.iban) {
+                                    holdingContent += `
+                                        <div class="banking-detail-row">
+                                            <span class="banking-detail-label">IBAN:</span>
+                                            <span>
+                                                <span class="banking-detail-value">${holding.iban}</span>
+                                                <button class="copy-button" onclick="copyToClipboard('${holding.iban.replace(/'/g, "\\'")}', this)">Copy</button>
+                                            </span>
+                                        </div>
+                                    `;
+                                }
+                                if (holding.swiftCode) {
+                                    holdingContent += `
+                                        <div class="banking-detail-row">
+                                            <span class="banking-detail-label">SWIFT:</span>
+                                            <span>
+                                                <span class="banking-detail-value">${holding.swiftCode}</span>
+                                                <button class="copy-button" onclick="copyToClipboard('${holding.swiftCode.replace(/'/g, "\\'")}', this)">Copy</button>
+                                            </span>
+                                        </div>
+                                    `;
+                                }
+                                holdingContent += `</div>`;
+                            }
+                            
+                            holdingContent += `
+                                    </div>
+                                    <div style="display: flex; gap: 5px;">
+                                        <button onclick="event.stopPropagation(); editHolding('${asset.id}', '${holding.id}')" style="background: #667eea; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;">Edit</button>
+                                        <button onclick="event.stopPropagation(); deleteHolding('${asset.id}', '${holding.id}')" style="background: #f56565; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;">Delete</button>
+                                    </div>
+                                </div>
+                            </div>
+                            `;
+                            return holdingContent;
+                        }).join('')}
+                        <button class="add-button" style="margin-top: 10px;" onclick="event.stopPropagation(); showAddHolding('${asset.id}')">+ Add Holding</button>
+                    </div>
+                `;
+            } else if (asset.assetType === 'bank' || asset.assetType === 'brokerage' || asset.assetType === 'crypto-exchange' || asset.assetType === 'crypto-custody') {
+                holdingsHtml = `
+                    <div class="holdings-section">
+                        <div class="holdings-title">Holdings</div>
+                        <div class="empty-state" style="padding: 20px;">
+                            <div style="font-size: 14px; color: #718096;">No holdings added yet</div>
+                        </div>
+                        <button class="add-button" style="margin-top: 10px;" onclick="event.stopPropagation(); showAddHolding('${asset.id}')">+ Add Holding</button>
+                    </div>
+                `;
+            }
+
+            detailView.innerHTML = `
+                <div class="detail-view">
+                    <button class="back-button" onclick="showMainView()">← Back to All Assets</button>
+                    <div class="detail-header">
+                        <div class="detail-title">${meta.icon} ${asset.name}</div>
+                        <div class="asset-card-value">${formatCurrency(assetValue, asset.currency || 'USD')}</div>
+                        ${assetCarry !== 0 ? `
+                            <div class="carry-info ${assetCarry < 0 ? 'negative' : ''}">
+                                <strong>Annual Carry:</strong> ${formatCurrency(Math.abs(assetCarry), 'USD')} ${assetCarry >= 0 ? '(income)' : '(expense)'}
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="detail-grid">
+                        ${fieldsHtml}
+                    </div>
+                    ${asset.notes ? `
+                        <div class="detail-item">
+                            <div class="detail-label">Notes</div>
+                            <div class="detail-value">${asset.notes}</div>
+                        </div>
+                    ` : ''}
+                    ${holdingsHtml}
+                    <div class="action-buttons">
+                        <button class="btn-primary btn-edit" onclick="editAsset('${assetId}')">Edit Asset</button>
+                        <button class="btn-delete" onclick="deleteAsset('${assetId}')">Delete</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Show main view
+        function showMainView() {
+            document.getElementById('mainView').style.display = 'block';
+            document.getElementById('detailView').style.display = 'none';
+            renderAssets();
+        }
+
+        // Update asset form based on type
+        function updateAssetForm() {
+            const assetType = document.getElementById('assetType').value;
+            const meta = assetTypeMeta[assetType];
+            
+            if (meta) {
+                document.getElementById('assetNameLabel').textContent = meta.label + ' Name';
+                
+                const accountLabel = document.getElementById('accountNumberLabel');
+                if (assetType === 'real-estate') {
+                    accountLabel.textContent = 'Property Address';
+                } else if (assetType === 'crypto-custody') {
+                    accountLabel.textContent = 'Wallet Address/ID';
+                } else {
+                    accountLabel.textContent = 'Account Number';
+                }
+            }
+
+            const bankingDetailsFields = document.getElementById('bankingDetailsFields');
+            const holdingsSection = document.getElementById('holdingsSection');
+            const carrySection = document.getElementById('carrySection');
+            
+            bankingDetailsFields.innerHTML = '';
+            holdingsSection.innerHTML = '';
+            carrySection.innerHTML = '';
+
+            // Show banking details for bank and brokerage accounts
+            if (assetType === 'bank' || assetType === 'brokerage') {
+                bankingDetailsFields.innerHTML = `
+                    <div style="background: #f7fafc; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <div style="font-weight: 600; margin-bottom: 10px; color: #4a5568;">Banking Details (Optional)</div>
+                        <div class="form-group">
+                            <label>Sort Code / Routing Number</label>
+                            <input type="text" id="sortCode" placeholder="e.g., 12-34-56">
+                        </div>
+                        <div class="form-group">
+                            <label>IBAN</label>
+                            <input type="text" id="iban" placeholder="e.g., GB29 NWBK 6016 1331 9268 19">
+                        </div>
+                        <div class="form-group">
+                            <label>SWIFT/BIC Code</label>
+                            <input type="text" id="swiftCode" placeholder="e.g., NWBKGB2L">
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Show holdings option for banks and brokerages
+            if (assetType === 'bank' || assetType === 'brokerage' || assetType === 'crypto-exchange' || assetType === 'crypto-custody') {
+                holdingsSection.innerHTML = `
+                    <div style="background: #f7fafc; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <div style="font-size: 13px; color: #4a5568; margin-bottom: 5px;">
+                            You can add individual holdings (stocks, bonds, crypto, etc.) after creating this asset.
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Real estate carry fields
+            if (assetType === 'real-estate') {
+                carrySection.innerHTML = `
+                    <div class="form-group">
+                        <label>Rental Status</label>
+                        <select id="rentalStatus">
+                            <option value="">Select status...</option>
+                            <option value="rented">Rented</option>
+                            <option value="unrented">Unrented</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Rental Income</label>
+                            <input type="number" id="rentalIncome" placeholder="0.00" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>Rental Frequency</label>
+                            <select id="rentalFrequency">
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly" selected>Monthly</option>
+                                <option value="yearly">Yearly</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Annual Expenses</label>
+                        <input type="number" id="annualExpenses" placeholder="Fees, taxes, maintenance, etc." step="0.01">
+                        <div style="font-size: 11px; color: #718096; margin-top: 4px;">Include property fees, taxes, insurance, maintenance</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Has Mortgage?</label>
+                        <select id="hasMortgage" onchange="toggleMortgageFields()">
+                            <option value="no">No</option>
+                            <option value="yes">Yes</option>
+                        </select>
+                    </div>
+                    <div id="mortgageFields"></div>
+                `;
+            }
+        }
+
+        // Toggle mortgage fields
+        function toggleMortgageFields() {
+            const hasMortgage = document.getElementById('hasMortgage')?.value;
+            const mortgageFields = document.getElementById('mortgageFields');
+
+            if (hasMortgage === 'yes') {
+                mortgageFields.innerHTML = `
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Mortgage Balance</label>
+                            <input type="number" id="mortgageBalance" placeholder="0.00" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>Monthly Payment</label>
+                            <input type="number" id="monthlyPayment" placeholder="0.00" step="0.01">
+                        </div>
+                    </div>
+                `;
+            } else {
+                mortgageFields.innerHTML = '';
+            }
+        }
+
+        // Show add asset modal
+        function showAddAsset() {
+            editingAssetId = null;
+            document.getElementById('assetModalTitle').textContent = 'Add Asset';
+            document.getElementById('assetForm').reset();
+            document.getElementById('assetModal').classList.add('active');
+        }
+
+        // Edit asset
+        function editAsset(assetId) {
+            const asset = assets.find(a => a.id === assetId);
+            if (!asset) return;
+
+            editingAssetId = assetId;
+            document.getElementById('assetModalTitle').textContent = 'Edit Asset';
+            document.getElementById('assetType').value = asset.assetType;
+            updateAssetForm();
+
+            setTimeout(() => {
+                document.getElementById('assetName').value = asset.name;
+                document.getElementById('accountNumber').value = asset.accountNumber || '';
+                document.getElementById('assetCurrency').value = asset.currency || 'USD';
+                document.getElementById('assetValue').value = asset.value;
+                document.getElementById('contactName').value = asset.contactName || '';
+                document.getElementById('contactPhone').value = asset.contactPhone || '';
+                document.getElementById('contactEmail').value = asset.contactEmail || '';
+                document.getElementById('assetNotes').value = asset.notes || '';
+
+                // Populate banking details
+                if (document.getElementById('sortCode')) {
+                    document.getElementById('sortCode').value = asset.sortCode || '';
+                }
+                if (document.getElementById('iban')) {
+                    document.getElementById('iban').value = asset.iban || '';
+                }
+                if (document.getElementById('swiftCode')) {
+                    document.getElementById('swiftCode').value = asset.swiftCode || '';
+                }
+
+                if (asset.assetType === 'real-estate') {
+                    setTimeout(() => {
+                        if (document.getElementById('rentalStatus')) {
+                            document.getElementById('rentalStatus').value = asset.rentalStatus || '';
+                        }
+                        if (document.getElementById('rentalIncome')) {
+                            document.getElementById('rentalIncome').value = asset.rentalIncome || '';
+                        }
+                        if (document.getElementById('rentalFrequency')) {
+                            document.getElementById('rentalFrequency').value = asset.rentalFrequency || 'monthly';
+                        }
+                        if (document.getElementById('annualExpenses')) {
+                            document.getElementById('annualExpenses').value = asset.annualExpenses || '';
+                        }
+                        if (document.getElementById('hasMortgage')) {
+                            document.getElementById('hasMortgage').value = asset.hasMortgage ? 'yes' : 'no';
+                            toggleMortgageFields();
+                        }
+                        setTimeout(() => {
+                            if (document.getElementById('mortgageBalance')) {
+                                document.getElementById('mortgageBalance').value = asset.mortgageBalance || '';
+                            }
+                            if (document.getElementById('monthlyPayment')) {
+                                document.getElementById('monthlyPayment').value = asset.monthlyPayment || '';
+                            }
+                        }, 10);
+                    }, 10);
+                }
+            }, 10);
+
+            document.getElementById('assetModal').classList.add('active');
+        }
+
+        // Delete asset
+        function deleteAsset(assetId) {
+            if (!confirm('Are you sure you want to delete this asset?')) return;
+
+            const index = assets.findIndex(a => a.id === assetId);
+            if (index !== -1) {
+                assets.splice(index, 1);
+                saveData();
+                showMainView();
+            }
+        }
+
+        // Close asset modal
+        function closeAssetModal() {
+            document.getElementById('assetModal').classList.remove('active');
+            document.getElementById('assetForm').reset();
+            editingAssetId = null;
+        }
+
+        // Handle asset form submission
+        document.getElementById('assetForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const assetType = document.getElementById('assetType').value;
+            const assetData = {
+                id: editingAssetId || Date.now().toString(),
+                assetType: assetType,
+                name: document.getElementById('assetName').value,
+                accountNumber: document.getElementById('accountNumber').value,
+                value: parseFloat(document.getElementById('assetValue').value || 0), // Default to 0 if empty
+                currency: document.getElementById('assetCurrency').value,
+                contactName: document.getElementById('contactName').value,
+                contactPhone: document.getElementById('contactPhone').value,
+                contactEmail: document.getElementById('contactEmail').value,
+                notes: document.getElementById('assetNotes').value,
+                holdings: editingAssetId ? (assets.find(a => a.id === editingAssetId)?.holdings || []) : []
+            };
+
+            // Add banking details for bank and brokerage accounts
+            if (assetType === 'bank' || assetType === 'brokerage') {
+                assetData.sortCode = document.getElementById('sortCode')?.value || '';
+                assetData.iban = document.getElementById('iban')?.value || '';
+                assetData.swiftCode = document.getElementById('swiftCode')?.value || '';
+            }
+
+            // Add real estate fields
+            if (assetType === 'real-estate') {
+                assetData.rentalStatus = document.getElementById('rentalStatus')?.value || '';
+                assetData.rentalIncome = parseFloat(document.getElementById('rentalIncome')?.value || 0);
+                assetData.rentalFrequency = document.getElementById('rentalFrequency')?.value || 'monthly';
+                assetData.annualExpenses = parseFloat(document.getElementById('annualExpenses')?.value || 0);
+                assetData.hasMortgage = document.getElementById('hasMortgage')?.value === 'yes';
+                if (assetData.hasMortgage) {
+                    assetData.mortgageBalance = parseFloat(document.getElementById('mortgageBalance')?.value || 0);
+                    assetData.monthlyPayment = parseFloat(document.getElementById('monthlyPayment')?.value || 0);
+                }
+            }
+
+            if (editingAssetId) {
+                const index = assets.findIndex(a => a.id === editingAssetId);
+                if (index !== -1) {
+                    assets[index] = assetData;
+                }
+            } else {
+                assets.push(assetData);
+            }
+
+            saveData();
+            closeAssetModal();
+            renderAssets();
+            showMainView();
+        });
+
+        // Holdings management
+        function showAddHolding(assetId) {
+            editingHoldingAssetId = assetId;
+            editingHoldingId = null;
+            document.getElementById('holdingModalTitle').textContent = 'Add Holding';
+            document.getElementById('holdingForm').reset();
+            document.getElementById('holdingModal').classList.add('active');
+        }
+
+        function editHolding(assetId, holdingId) {
+            const asset = assets.find(a => a.id === assetId);
+            if (!asset || !asset.holdings) return;
+            
+            const holding = asset.holdings.find(h => h.id === holdingId);
+            if (!holding) return;
+
+            editingHoldingAssetId = assetId;
+            editingHoldingId = holdingId;
+            document.getElementById('holdingModalTitle').textContent = 'Edit Holding';
+            
+            document.getElementById('holdingType').value = holding.type;
+            document.getElementById('holdingName').value = holding.name;
+            
+            updateHoldingFields();
+            
+            setTimeout(() => {
+                if (document.getElementById('holdingCurrency')) {
+                    document.getElementById('holdingCurrency').value = holding.currency || asset.currency || 'USD';
+                }
+                if (document.getElementById('holdingValue')) {
+                    document.getElementById('holdingValue').value = holding.value || '';
+                }
+                if (document.getElementById('holdingQuantity')) {
+                    document.getElementById('holdingQuantity').value = holding.quantity || '';
+                }
+                if (document.getElementById('holdingCurrentPrice')) {
+                    document.getElementById('holdingCurrentPrice').value = holding.currentPrice || '';
+                }
+                if (document.getElementById('holdingCoupon')) {
+                    document.getElementById('holdingCoupon').value = holding.coupon || '';
+                }
+                // Populate banking details
+                if (document.getElementById('holdingAccountNumber')) {
+                    document.getElementById('holdingAccountNumber').value = holding.accountNumber || '';
+                }
+                if (document.getElementById('holdingSortCode')) {
+                    document.getElementById('holdingSortCode').value = holding.sortCode || '';
+                }
+                if (document.getElementById('holdingIban')) {
+                    document.getElementById('holdingIban').value = holding.iban || '';
+                }
+                if (document.getElementById('holdingSwiftCode')) {
+                    document.getElementById('holdingSwiftCode').value = holding.swiftCode || '';
+                }
+            }, 10);
+            
+            document.getElementById('holdingModal').classList.add('active');
+        }
+
+        function deleteHolding(assetId, holdingId) {
+            if (!confirm('Are you sure you want to delete this holding?')) return;
+            
+            const asset = assets.find(a => a.id === assetId);
+            if (!asset || !asset.holdings) return;
+            
+            const index = asset.holdings.findIndex(h => h.id === holdingId);
+            if (index !== -1) {
+                asset.holdings.splice(index, 1);
+                
+                // Note: asset value will be calculated by getAssetValue() when needed
+                
+                saveData();
+                showAssetDetail(assetId);
+            }
+        }
+
+        function updateHoldingFields() {
+            const holdingType = document.getElementById('holdingType').value;
+            const dynamicFields = document.getElementById('holdingDynamicFields');
+            
+            // Get parent asset currency for default
+            const parentAsset = assets.find(a => a.id === editingHoldingAssetId);
+            const parentCurrency = parentAsset?.currency || 'USD';
+            const isBank = parentAsset?.assetType === 'bank';
+            
+            const currencyField = `
+                <div class="form-group">
+                    <label>Currency</label>
+                    <select id="holdingCurrency">
+                        <option value="USD" ${parentCurrency === 'USD' ? 'selected' : ''}>$ US Dollar</option>
+                        <option value="GBP" ${parentCurrency === 'GBP' ? 'selected' : ''}>£ British Pound</option>
+                        <option value="EUR" ${parentCurrency === 'EUR' ? 'selected' : ''}>€ Euro</option>
+                        <option value="HKD" ${parentCurrency === 'HKD' ? 'selected' : ''}>HK$ Hong Kong Dollar</option>
+                        <option value="AED" ${parentCurrency === 'AED' ? 'selected' : ''}>د.إ UAE Dirham</option>
+                    </select>
+                </div>
+            `;
+            
+            // Banking details for bank account holdings
+            const bankingDetailsFields = isBank ? `
+                <div style="background: #f7fafc; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                    <div style="font-weight: 600; margin-bottom: 10px; color: #4a5568;">Banking Details (Optional)</div>
+                    <div class="form-group">
+                        <label>Account Number</label>
+                        <input type="text" id="holdingAccountNumber" placeholder="e.g., 12345678">
+                    </div>
+                    <div class="form-group">
+                        <label>Sort Code / Routing Number</label>
+                        <input type="text" id="holdingSortCode" placeholder="e.g., 12-34-56">
+                    </div>
+                    <div class="form-group">
+                        <label>IBAN</label>
+                        <input type="text" id="holdingIban" placeholder="e.g., GB29 NWBK 6016 1331 9268 19">
+                    </div>
+                    <div class="form-group">
+                        <label>SWIFT/BIC Code</label>
+                        <input type="text" id="holdingSwiftCode" placeholder="e.g., NWBKGB2L">
+                    </div>
+                </div>
+            ` : '';
+            
+            if (holdingType === 'cash') {
+                dynamicFields.innerHTML = `
+                    ${currencyField}
+                    <div class="form-group">
+                        <label>Amount</label>
+                        <input type="number" id="holdingValue" placeholder="0.00" step="0.01" required>
+                    </div>
+                    ${bankingDetailsFields}
+                `;
+            } else if (holdingType === 'stocks' || holdingType === 'etf' || holdingType === 'mutual-funds' || holdingType === 'crypto') {
+                dynamicFields.innerHTML = `
+                    ${currencyField}
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Quantity</label>
+                            <input type="number" id="holdingQuantity" placeholder="0" step="0.0001" onchange="calculateHoldingValue()" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Current Price</label>
+                            <input type="number" id="holdingCurrentPrice" placeholder="0.00" step="0.01" onchange="calculateHoldingValue()" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Value (auto-calculated)</label>
+                        <input type="number" id="holdingValue" placeholder="0.00" step="0.01" readonly style="background: #f7fafc;">
+                    </div>
+                    ${bankingDetailsFields}
+                `;
+            } else if (holdingType === 'bonds') {
+                dynamicFields.innerHTML = `
+                    ${currencyField}
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Quantity (Notional)</label>
+                            <input type="number" id="holdingQuantity" placeholder="0" step="0.01" onchange="calculateHoldingValue()" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Current Price (%)</label>
+                            <input type="number" id="holdingCurrentPrice" placeholder="100" step="0.01" onchange="calculateHoldingValue()" required>
+                            <div style="font-size: 11px; color: #718096; margin-top: 4px;">e.g., 104 for 104%</div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Annual Coupon (%)</label>
+                        <input type="number" id="holdingCoupon" placeholder="e.g., 3.5 for 3.5%" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Value (auto-calculated)</label>
+                        <input type="number" id="holdingValue" placeholder="0.00" step="0.01" readonly style="background: #f7fafc;">
+                    </div>
+                    ${bankingDetailsFields}
+                `;
+            } else {
+                dynamicFields.innerHTML = `
+                    ${currencyField}
+                    <div class="form-group">
+                        <label>Value</label>
+                        <input type="number" id="holdingValue" placeholder="0.00" step="0.01" required>
+                    </div>
+                    ${bankingDetailsFields}
+                `;
+            }
+        }
+
+        function calculateHoldingValue() {
+            const quantity = parseFloat(document.getElementById('holdingQuantity')?.value || 0);
+            const currentPrice = parseFloat(document.getElementById('holdingCurrentPrice')?.value || 0);
+            const holdingType = document.getElementById('holdingType')?.value;
+            
+            if (quantity && currentPrice) {
+                let value;
+                if (holdingType === 'bonds') {
+                    value = quantity * (currentPrice / 100);
+                } else {
+                    value = quantity * currentPrice;
+                }
+                document.getElementById('holdingValue').value = value.toFixed(2);
+            }
+        }
+
+        function closeHoldingModal() {
+            document.getElementById('holdingModal').classList.remove('active');
+            document.getElementById('holdingForm').reset();
+            editingHoldingAssetId = null;
+            editingHoldingId = null;
+        }
+
+        document.getElementById('holdingForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const asset = assets.find(a => a.id === editingHoldingAssetId);
+            if (!asset) return;
+
+            const holdingData = {
+                id: editingHoldingId || Date.now().toString(),
+                type: document.getElementById('holdingType').value,
+                name: document.getElementById('holdingName').value,
+                value: parseFloat(document.getElementById('holdingValue').value),
+                currency: document.getElementById('holdingCurrency')?.value || asset.currency || 'USD'
+            };
+
+            if (document.getElementById('holdingQuantity')) {
+                holdingData.quantity = parseFloat(document.getElementById('holdingQuantity').value);
+            }
+            if (document.getElementById('holdingCurrentPrice')) {
+                holdingData.currentPrice = parseFloat(document.getElementById('holdingCurrentPrice').value);
+            }
+            if (document.getElementById('holdingCoupon')) {
+                holdingData.coupon = parseFloat(document.getElementById('holdingCoupon').value || 0);
+            }
+
+            // Save banking details if this is a bank account
+            if (asset.assetType === 'bank') {
+                holdingData.accountNumber = document.getElementById('holdingAccountNumber')?.value || '';
+                holdingData.sortCode = document.getElementById('holdingSortCode')?.value || '';
+                holdingData.iban = document.getElementById('holdingIban')?.value || '';
+                holdingData.swiftCode = document.getElementById('holdingSwiftCode')?.value || '';
+            }
+
+            if (!asset.holdings) {
+                asset.holdings = [];
+            }
+
+            if (editingHoldingId) {
+                const index = asset.holdings.findIndex(h => h.id === editingHoldingId);
+                if (index !== -1) {
+                    asset.holdings[index] = holdingData;
+                }
+            } else {
+                asset.holdings.push(holdingData);
+            }
+
+            // Note: asset.value will be calculated by getAssetValue() when needed
+            // No need to manually update it here
+
+            saveData();
+            closeHoldingModal();
+            showAssetDetail(editingHoldingAssetId);
+        });
+
+        // Copy to clipboard function with fallback
+        function copyToClipboard(text, button) {
+            // Try modern clipboard API first
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showCopySuccess(button);
+                }).catch(err => {
+                    // Fallback to older method
+                    fallbackCopy(text, button);
+                });
+            } else {
+                // Use fallback method
+                fallbackCopy(text, button);
+            }
+        }
+
+        // Fallback copy method that works without HTTPS
+        function fallbackCopy(text, button) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                textArea.remove();
+                showCopySuccess(button);
+            } catch (err) {
+                textArea.remove();
+                alert('Failed to copy. Please manually select and copy: ' + text);
+            }
+        }
+
+        // Show copy success feedback
+        function showCopySuccess(button) {
+            const originalText = button.textContent;
+            button.textContent = '✓ Copied!';
+            button.style.background = '#48bb78';
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.style.background = '';
+            }, 2000);
+        }
+
+        // Backup data to JSON file
+        function backupData() {
+            const backup = {
+                version: 'v4',
+                timestamp: new Date().toISOString(),
+                assets: assets
+            };
+            
+            const dataStr = JSON.stringify(backup, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const dateStr = new Date().toISOString().split('T')[0];
+            a.download = `asset-tracker-backup-${dateStr}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert('✅ Backup saved! Keep this file safe - you can restore your data from it anytime.');
+        }
+
+        // Restore data from JSON file
+        function restoreData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const backup = JSON.parse(e.target.result);
+                    
+                    // Validate backup structure
+                    if (!backup.assets || !Array.isArray(backup.assets)) {
+                        alert('❌ Invalid backup file format.');
+                        return;
+                    }
+                    
+                    // Confirm before restoring
+                    const confirmMsg = `This will restore ${backup.assets.length} asset(s) from ${new Date(backup.timestamp).toLocaleDateString()}.\n\nThis will REPLACE your current data. Continue?`;
+                    if (!confirm(confirmMsg)) {
+                        event.target.value = ''; // Reset file input
+                        return;
+                    }
+                    
+                    // Restore the data
+                    assets = backup.assets;
+                    saveData();
+                    renderAssets();
+                    
+                    alert(`✅ Successfully restored ${assets.length} asset(s)!`);
+                    event.target.value = ''; // Reset file input
+                    
+                } catch (error) {
+                    alert('❌ Error reading backup file: ' + error.message);
+                    event.target.value = ''; // Reset file input
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Export function (simplified)
+        function exportAssets() {
+            const now = new Date().toLocaleDateString();
+            const netWorth = calculateNetWorth();
+            const totalCarry = calculateTotalCarry();
+            
+            // Create backup data
+            const backupData = {
+                version: 'v4',
+                timestamp: new Date().toISOString(),
+                assets: assets
+            };
+            const backupJson = JSON.stringify(backupData, null, 2);
+            const backupDataUrl = 'data:application/json;charset=utf-8,' + encodeURIComponent(backupJson);
+            
+            let html = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Asset Summary - ${now}</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 40px; color: #2d3748; }
+        h1 { color: #667eea; border-bottom: 3px solid #667eea; padding-bottom: 10px; }
+        h2 { color: #4a5568; margin-top: 30px; }
+        .summary { background: #f7fafc; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .asset { background: white; border: 1px solid #e2e8f0; padding: 20px; margin: 15px 0; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        td { padding: 8px; border-bottom: 1px solid #e2e8f0; }
+        .td-label { width: 200px; font-weight: bold; color: #4a5568; }
+        .backup-button { 
+            background: #48bb78; 
+            color: white; 
+            border: none; 
+            padding: 12px 24px; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px 10px 10px 0;
+        }
+        .backup-button:hover { background: #38a169; }
+        @media print { 
+            body { padding: 20px; } 
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Asset Summary</h1>
+    <div class="summary">
+        <p><strong>Generated:</strong> ${now}</p>
+        <p><strong>Total Net Worth (USD):</strong> <span style="font-size: 24px; color: #667eea;">${formatCurrency(netWorth, 'USD')}</span></p>
+        <p><strong>Estimated Annual Carry (USD):</strong> <span style="font-size: 20px; color: ${totalCarry >= 0 ? '#48bb78' : '#f56565'};">${formatCurrency(Math.abs(totalCarry), 'USD')} ${totalCarry >= 0 ? '(income)' : '(expense)'}</span></p>
+    </div>
+    
+    <div class="no-print" style="background: #f0fff4; padding: 15px; border-radius: 8px; border-left: 4px solid #48bb78; margin-bottom: 20px;">
+        <p style="margin: 0 0 10px 0;"><strong>💾 Download Data Backup:</strong></p>
+        <p style="margin: 0 0 10px 0; font-size: 14px;">Click the button below to download a backup file that you can import back into the Asset Tracker app.</p>
+        <a href="${backupDataUrl}" download="asset-tracker-backup-${new Date().toISOString().split('T')[0]}.json" class="backup-button">📥 Download Backup JSON</a>
+    </div>
+    
+    <p class="no-print" style="background: #fff5f5; padding: 15px; border-radius: 8px; border-left: 4px solid #f56565;">
+        <strong>⚠️ Important:</strong> This document contains sensitive financial information. Store it securely.
+    </p>
+`;
+
+            assets.forEach(asset => {
+                const meta = assetTypeMeta[asset.assetType] || { label: 'Asset' };
+                const assetCarry = calculateAssetCarry(asset);
+                const assetValue = getAssetValue(asset);
+                
+                html += `<div class="asset">
+                    <h2>${meta.icon || ''} ${asset.name}</h2>
+                    <table>
+                        <tr><td class="td-label">Type:</td><td>${meta.label}</td></tr>
+                        <tr><td class="td-label">Value:</td><td>${formatCurrency(assetValue, asset.currency || 'USD')}</td></tr>`;
+                
+                if (assetCarry !== 0) {
+                    html += `<tr><td class="td-label">Annual Carry:</td><td>${formatCurrency(Math.abs(assetCarry), 'USD')} ${assetCarry >= 0 ? '(income)' : '(expense)'}</td></tr>`;
+                }
+                if (asset.accountNumber) html += `<tr><td class="td-label">Account/Address:</td><td>${asset.accountNumber}</td></tr>`;
+                if (asset.contactName) html += `<tr><td class="td-label">Contact:</td><td>${asset.contactName}</td></tr>`;
+                if (asset.contactPhone) html += `<tr><td class="td-label">Phone:</td><td>${asset.contactPhone}</td></tr>`;
+                if (asset.contactEmail) html += `<tr><td class="td-label">Email:</td><td>${asset.contactEmail}</td></tr>`;
+                if (asset.notes) html += `<tr><td class="td-label">Notes:</td><td>${asset.notes}</td></tr>`;
+                
+                html += `</table>`;
+                
+                if (asset.holdings && asset.holdings.length > 0) {
+                    html += `<h3 style="margin-top: 15px;">Holdings:</h3>`;
+                    asset.holdings.forEach(holding => {
+                        html += `<div style="background: #f7fafc; padding: 10px; margin: 5px 0; border-radius: 4px;">
+                            <strong>${holding.name}</strong> (${holding.type})<br>
+                            ${holding.currency ? `Currency: ${currencies[holding.currency]?.name || holding.currency}<br>` : ''}
+                            ${holding.quantity ? `Quantity: ${holding.quantity}<br>` : ''}
+                            ${holding.currentPrice ? `Price: ${holding.type === 'bonds' ? holding.currentPrice + '%' : formatCurrency(holding.currentPrice, holding.currency || asset.currency || 'USD')}<br>` : ''}
+                            ${holding.coupon ? `Coupon: ${holding.coupon}%<br>` : ''}
+                            Value: ${formatCurrency(holding.value, holding.currency || asset.currency || 'USD')}
+                        </div>`;
+                    });
+                }
+                
+                html += `</div>`;
+            });
+
+            html += `
+    <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #e2e8f0; font-size: 12px; color: #718096;">
+        <p>This summary was generated from your Asset Tracker on ${now}.</p>
+        <p><strong>Important:</strong> Store this document securely and update regularly as your assets change.</p>
+    </div>
+</body>
+</html>`;
+
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Asset-Summary-${new Date().toISOString().split('T')[0]}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert('Asset summary downloaded! Open it in your browser to view and download the backup JSON file.');
+        }
+
+        // Initialize
+        loadData();
+        renderAssets();
+    </script>
+</body>
+</html>
